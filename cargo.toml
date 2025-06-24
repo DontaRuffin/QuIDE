@@ -1,0 +1,33 @@
+[package]
+name = "quide"
+version = "0.1.0"
+authors = ["Donta Ruffin"]
+edition = "2021"
+description = "QuIDE: Quantum Integrated Development Environment (Rust version)"
+license = "MIT"
+repository = "https://github.com/DontaRuffin/QuIDE"
+
+[dependencies]
+# Command-line argument parser (latest, stable)
+clap = { version = "4.4", features = ["derive"] }
+
+# Complex number support
+num-complex = "0.4"
+
+# Matrix operations (backed by BLAS, optional)
+ndarray = { version = "0.15", features = ["blas"] }
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Serialization for saving/loading circuits
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Optional: Logging and formatting
+log = "0.4"
+env_logger = "0.10"
+
+[dev-dependencies]
+assert_approx_eq = "1.1"     # Useful for testing floating-point matrix ops
