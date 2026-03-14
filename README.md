@@ -1,76 +1,130 @@
-# QuIDE
-Quatum Development Environment
+# QuIDE — Quantum IDE
 
-# QuIDE: Quantum Integrated Development Environment
+A browser-based Quantum Computing IDE built with Next.js, Qiskit Aer, and Supabase.
 
-QuIDE is an open-source platform designed to streamline the development and testing of quantum computing algorithms and applications. It combines a user-friendly graphical interface, a powerful quantum simulator, and an extensive library of pre-built quantum components and templates.
+## Stack
 
-## Features
+| Layer | Tech |
+|-------|------|
+| Frontend | Next.js 14 (App Router), TypeScript, Tailwind CSS |
+| State | Zustand |
+| Circuit Engine | quantum-circuit.js |
+| Code Editor | Monaco Editor |
+| Charts | Recharts |
+| Backend | FastAPI + Qiskit Aer (Python 3.11) |
+| Auth / DB | Supabase (Postgres + RLS) |
+| Deploy | Vercel (frontend) · Railway (Python service) |
 
-- Graphical Quantum Circuit Designer
-- Quantum Simulator
-- Quantum Algorithm Library
-- Quantum Compiler and Optimizer
-- Hardware Abstraction Layer
-- Learning Resources and Community Support
+---
+
+## Project Structure
+
+```
+quide/
+├── src/
+│   ├── app/                    # Next.js App Router pages
+│   │   ├── layout.tsx
+│   │   ├── page.tsx
+│   │   └── ide/
+│   │       └── page.tsx
+│   ├── components/
+│   │   ├── ide/
+│   │   │   └── CircuitCanvas.tsx
+│   │   ├── templates/
+│   │   └── ui/
+│   ├── hooks/
+│   ├── lib/
+│   │   ├── quantum/
+│   │   ├── supabase/
+│   │   └── api/
+│   ├── stores/
+│   │   └── circuitStore.ts
+│   └── types/
+│       └── circuit.ts
+├── python/
+│   ├── main.py
+│   ├── routes/
+│   │   └── simulate.py
+│   ├── services/
+│   │   └── qiskit_runner.py
+│   └── requirements.txt
+├── supabase/
+│   └── migrations/
+│       └── 001_initial.sql
+├── SETUP.sh
+└── .env.example
+```
+
+---
 
 ## Getting Started
 
-These instructions will help you set up a development environment to start building QuIDE.
+### 1. Clone & Install
 
-### Prerequisites
-
-To start building QuIDE, you'll need the following:
-
-- Python 3.7 or later
-- Qiskit
-- Cirq
-- Pennylane
-- (Optional) A desktop framework like Qt or GTK for building the graphical interface
-
-### Installation
-
-1. Clone the repository:
-
-`bash
-git clone https://github.com/yourusername/QuIDE.git
+```bash
+git clone https://github.com/DontaRuffin/QuIDE.git
 cd QuIDE
-`
+npm install
+```
 
-2. Set up a virtual environment (optional but recommended):
+### 2. Environment Variables
 
-\```bash
-python -m venv venv
-source venv/bin/activate  # On Windows, use 'venv\Scripts\activate'
-\```
+```bash
+cp .env.example .env.local
+# Fill in your Supabase URL, anon key, and Python service URL
+```
 
-3. Install the required Python libraries:
+### 3. Run Frontend
 
-\```bash
+```bash
+npm run dev
+# → http://localhost:3000
+```
+
+### 4. Run Python Service
+
+```bash
+cd python
+python3 -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
-\```
+uvicorn main:app --reload --port 8000
+# → http://localhost:8000/health
+```
 
-4. (Optional) Install the desktop framework of your choice for building the graphical interface.
+### 5. Supabase Migrations
 
-## Development
+Paste the contents of `supabase/migrations/001_initial.sql` into your Supabase SQL Editor.
 
-1. Develop the core quantum simulator, compiler, and optimizer in the `quide` directory.
-2. Implement the graphical interface for designing quantum circuits using web technologies (HTML, CSS, JavaScript) or desktop frameworks (e.g., Qt, GTK) in the `gui` directory.
-3. Create the hardware abstraction layer and integrate with popular quantum computing platforms in the `hal` directory.
-4. Develop a library of pre-built quantum algorithms and components in the `library` directory.
-5. Compile learning resources, tutorials, and sample projects in the `docs` and `examples` directories.
-6. Set up a community forum or collaboration platform for users.
+---
 
-## Contributing
+## Phase 1 Deliverables
 
-Please read `CONTRIBUTING.md` for details on our code of conduct and the process for submitting pull requests to the project.
+- [x] Circuit type definitions (`types/circuit.ts`)
+- [x] Zustand circuit store with QASM sync (`stores/circuitStore.ts`)
+- [x] CircuitCanvas component — drag-drop + SVG render (`components/ide/CircuitCanvas.tsx`)
+- [x] FastAPI simulation service (`python/main.py`)
+- [x] Qiskit Aer runner with statevector + shot modes (`python/services/qiskit_runner.py`)
+- [x] Simulate route with 30s timeout + thread pool (`python/routes/simulate.py`)
+- [x] Supabase schema — profiles, circuits, simulation_results
+- [x] Setup script (`SETUP.sh`)
+
+---
+
+## Deployment
+
+**Frontend → Vercel**
+```bash
+npx vercel --prod
+```
+Add env vars in Vercel dashboard post-deploy.
+
+**Python Service → Railway**
+Push `python/` directory. Railway auto-detects FastAPI via `requirements.txt`.
+Set `PORT=8000` and `SERVICE_API_KEY` in Railway environment variables.
+
+---
 
 ## License
 
-This project is licensed under the MIT License - see the `LICENSE` file for details.
-
-## Acknowledgments
-
-- OpenAI for inspiring the idea with ChatGPT
-- The Qiskit, Cirq, and Pennylane teams for providing powerful quantum computing libraries
-
+MIT
