@@ -5,7 +5,7 @@ from qiskit import QuantumCircuit, transpile
 from qiskit_aer import AerSimulator
 from qiskit_aer.primitives import Sampler
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Dict, List
 import time
 import re
 
@@ -17,8 +17,8 @@ class SimulationRequest(BaseModel):
 
 
 class SimulationResult(BaseModel):
-    counts: dict[str, int]
-    statevector: Optional[list[list[float]]]
+    counts: Dict[str, int]
+    statevector: Optional[List[List[float]]]
     shots: int
     runtime_ms: int
     backend: str
@@ -59,8 +59,8 @@ def run_simulation(req: SimulationRequest) -> SimulationResult:
         and circuit.num_clbits == 0
     )
 
-    counts: dict[str, int] = {}
-    statevector_data: Optional[list[list[float]]] = None
+    counts: Dict[str, int] = {}
+    statevector_data: Optional[List[List[float]]] = None
 
     if use_statevector:
         sv_circuit = circuit.copy()

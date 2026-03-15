@@ -1,9 +1,3 @@
-// QuIDE — Circuit Canvas Component
-// src/components/ide/CircuitCanvas.tsx
-//
-// Wraps the imperative quantum-circuit.js library
-// in a controlled React interface with dark theme.
-
 'use client';
 
 import {
@@ -19,8 +13,7 @@ type QuantumCircuitInstance = {
   init: (numQubits: number) => void;
   addGate: (gateName: string, column: number, qubit: number | number[], options?: object) => void;
   removeGate: (column: number, qubit: number) => void;
-  load: (obj: object) => void;
-  exportQASM: (comment?: string, decompose?: boolean, exportAsGateName?: string) => string;
+  exportQASM: (comment?: string, decompose?: boolean) => string;
   importQASM: (qasm: string, errorCallback?: (err: unknown) => void) => void;
   exportSVG: (embedded?: boolean, options?: object) => string;
   clear: () => void;
@@ -39,95 +32,119 @@ interface CircuitCanvasProps {
 }
 
 const DARK_THEME_CSS = `
-  .qc-gate-rect { fill: #161B22 !important; stroke: #30363D !important; }
-  .qc-gate-label { fill: #E6EDF3 !important; font-family: 'JetBrains Mono', monospace !important; }
-  .qc-wire { stroke: #30363D !important; }
-  .qc-measure { stroke: #3FB950 !important; fill: none !important; }
-  .qc-control { fill: #58A6FF !important; }
-  .qc-not { stroke: #58A6FF !important; fill: none !important; }
-  .qc-gate-h .qc-gate-rect { fill: #1A3A5C !important; stroke: #388BFD !important; }
-  .qc-gate-x .qc-gate-rect { fill: #3D1A1A !important; stroke: #F85149 !important; }
-  .qc-gate-cx .qc-gate-rect { fill: #1A2E4A !important; stroke: #388BFD !important; }
-  .qc-gate-measure .qc-gate-rect { fill: #1A3A2A !important; stroke: #3FB950 !important; }
   text { fill: #E6EDF3 !important; }
   line { stroke: #30363D !important; }
+  rect { stroke: #30363D !important; }
+  .qc-wire { stroke: #30363D !important; }
 `;
 
 export const CircuitCanvas = forwardRef<CircuitCanvasRef, CircuitCanvasProps>(
   ({ className = '' }, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const circuitRef = useRef<QuantumCircuitInstance | null>(null);
-    const isUpdatingFromCode = useRef(false);
+    const initializedRef = useRef(false);
 
-    const { qasm, updateSource, numQubits, setQasmFromCanvas } = useCircuitStore((s) => ({
-      qasm: s.qasm,
-      updateSource: s.updateSource,
-      numQubits: s.circuit.numQubits,
-      setQasmFromCanvas: s.setQasmFromCanvas,
-    }));
+    // ── Critical: these refs prevent the infinite loop ──
+    // isImporting: true while we're loading QASM into the lib (suppress emit)
+    const isImporting = useRef(false);
+    // lastEmittedQasm: prevents emitting the same QASM twice back-to-back
+    const lastEmittedQasm = useRef<string>('');
 
-    useEffect(() => {
-      let mounted = true;
-      import('quantum-circuit').then((mod) => {
-        if (!mounted || !containerRef.current) return;
-        const QuantumCircuit = mod.default ?? mod.QuantumCircuit ?? mod;
-        const qc = new QuantumCircuit(numQubits) as QuantumCircuitInstance;
-        circuitRef.current = qc;
-        renderCanvas();
-      });
-      return () => { mounted = false; };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    // Only subscribe to what we need — use individual selectors to avoid
+    // object reference churn that triggers re-renders
+    const qasm = useCircuitStore((s) => s.qasm);
+    const updateSource = useCircuitStore((s) => s.updateSource);
+    const numQubits = useCircuitStore((s) => s.circuit.numQubits);
+    const setQasmFromCanvas = useCircuitStore((s) => s.setQasmFromCanvas);
 
-    useEffect(() => {
-      if (!circuitRef.current) return;
-      if (updateSource === 'canvas') return;
-      isUpdatingFromCode.current = true;
-      try {
-        circuitRef.current.importQASM(qasm, (err) => {
-          console.warn('[QuIDE] QASM parse error:', err);
-        });
-        renderCanvas();
-      } finally {
-        isUpdatingFromCode.current = false;
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [qasm, updateSource]);
-
+    // ── Render SVG ─────────────────────────────────────
     const renderCanvas = useCallback(() => {
       const qc = circuitRef.current;
       const container = containerRef.current;
       if (!qc || !container) return;
-      const svg = qc.exportSVG(true, { cellWidth: 60, cellHeight: 50, hSpacing: 1.0, vSpacing: 1.0 });
-      const themedSvg = svg
-        .replace('<svg', `<svg style="background: #0D1117;"`)
-        .replace('</svg>', `<style>${DARK_THEME_CSS}</style></svg>`);
-      container.innerHTML = themedSvg;
-      attachGateListeners();
-    }, []);
 
-    const attachGateListeners = useCallback(() => {
-      const container = containerRef.current;
-      if (!container) return;
-      container.querySelectorAll('[data-column]').forEach((el) => {
-        (el as SVGElement).style.cursor = 'pointer';
-      });
-    }, []);
+      try {
+        const svg = qc.exportSVG(true, {
+          cellWidth: 60,
+          cellHeight: 50,
+        });
 
+        const themedSvg = svg.replace(
+          '</svg>',
+          `<style>${DARK_THEME_CSS}</style></svg>`
+        );
+
+        container.innerHTML = themedSvg;
+      } catch (e) {
+        console.warn('[QuIDE] SVG render error:', e);
+      }
+    }, []); // no deps — pure imperative operation
+
+    // ── Emit QASM to store after a canvas mutation ─────
     const emitQasm = useCallback(() => {
+      if (isImporting.current) return; // we're loading, not the user
       const qc = circuitRef.current;
-      if (!qc || isUpdatingFromCode.current) return;
+      if (!qc) return;
+
       const newQasm = qc.exportQASM('', false);
+
+      // Deduplicate — don't emit the same string twice
+      if (newQasm === lastEmittedQasm.current) return;
+      lastEmittedQasm.current = newQasm;
+
       setQasmFromCanvas(newQasm);
       renderCanvas();
     }, [setQasmFromCanvas, renderCanvas]);
 
+    // ── Initialize once on mount ───────────────────────
+    useEffect(() => {
+      if (initializedRef.current) return;
+      initializedRef.current = true;
+
+      import('quantum-circuit').then((mod) => {
+        const QuantumCircuit = mod.default ?? (mod as unknown as { QuantumCircuit: unknown }).QuantumCircuit ?? mod;
+        const qc = new (QuantumCircuit as new (n: number) => QuantumCircuitInstance)(numQubits);
+        circuitRef.current = qc;
+
+        // Load initial QASM if present
+        if (qasm && qasm.trim().length > 0) {
+          isImporting.current = true;
+          qc.importQASM(qasm, (err) => console.warn('[QuIDE] init QASM error:', err));
+          isImporting.current = false;
+          lastEmittedQasm.current = qasm;
+        }
+
+        renderCanvas();
+      }).catch((e) => console.error('[QuIDE] Failed to load quantum-circuit:', e));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // intentionally empty — init once only
+
+    // ── Sync canvas when code editor changes QASM ─────
+    useEffect(() => {
+      // Only react to changes originating from the code editor
+      // If source is 'canvas' or null, we triggered it — skip
+      if (updateSource !== 'code' && updateSource !== 'template') return;
+      if (!circuitRef.current) return;
+      if (qasm === lastEmittedQasm.current) return;
+
+      isImporting.current = true;
+      try {
+        circuitRef.current.importQASM(qasm, (err) => {
+          console.warn('[QuIDE] QASM import error:', err);
+        });
+        lastEmittedQasm.current = qasm;
+        renderCanvas();
+      } finally {
+        isImporting.current = false;
+      }
+    }, [qasm, updateSource, renderCanvas]);
+
+    // ── Imperative API ─────────────────────────────────
     useImperativeHandle(ref, () => ({
-      addGate: (gateName, qubit, column) => {
+      addGate: (gateName, qubit, column = -1) => {
         const qc = circuitRef.current;
         if (!qc) return;
-        const col = column ?? nextAvailableColumn(qc, qubit);
-        qc.addGate(gateName, col, qubit);
+        qc.addGate(gateName, column, qubit);
         emitQasm();
       },
       clear: () => {
@@ -137,9 +154,10 @@ export const CircuitCanvas = forwardRef<CircuitCanvasRef, CircuitCanvasProps>(
       setQasm: (newQasm) => {
         const qc = circuitRef.current;
         if (!qc) return;
-        isUpdatingFromCode.current = true;
-        qc.importQASM(newQasm, (err) => { console.warn('[QuIDE] QASM import error:', err); });
-        isUpdatingFromCode.current = false;
+        isImporting.current = true;
+        qc.importQASM(newQasm, (err) => console.warn('[QuIDE] setQasm error:', err));
+        isImporting.current = false;
+        lastEmittedQasm.current = newQasm;
         renderCanvas();
       },
       exportQasm: () => circuitRef.current?.exportQASM('', false) ?? '',
@@ -158,39 +176,29 @@ export const CircuitCanvas = forwardRef<CircuitCanvasRef, CircuitCanvasProps>(
             e.preventDefault();
             const gateName = e.dataTransfer.getData('gate');
             if (!gateName || !circuitRef.current) return;
+
             const rect = containerRef.current?.getBoundingClientRect();
             if (!rect) return;
             const relY = e.clientY - rect.top;
-            const qubit = Math.floor(relY / 50);
-            const clampedQubit = Math.max(0, Math.min(numQubits - 1, qubit));
-            circuitRef.current.addGate(gateName, -1, clampedQubit);
+            const qubit = Math.max(0, Math.min(numQubits - 1, Math.floor(relY / 50)));
+
+            circuitRef.current.addGate(gateName, -1, qubit);
             emitQasm();
           }}
           aria-label="Quantum circuit canvas"
         />
-        {!qasm.includes('h ') && !qasm.includes('x ') && !qasm.includes('cx ') && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="text-center opacity-30">
-              <div className="text-4xl mb-2">⬡</div>
-              <div className="text-sm" style={{ color: '#8B949E', fontFamily: 'monospace' }}>
-                Drag gates from the toolbar
-              </div>
+
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="text-center opacity-20 select-none">
+            <div className="text-5xl mb-3">⬡</div>
+            <div className="text-sm font-mono" style={{ color: '#8B949E' }}>
+              Drag gates from the toolbar to build your circuit
             </div>
           </div>
-        )}
+        </div>
       </div>
     );
   }
 );
 
 CircuitCanvas.displayName = 'CircuitCanvas';
-
-function nextAvailableColumn(qc: QuantumCircuitInstance, qubit: number): number {
-  const gates = (qc as unknown as { gates: unknown[][][] }).gates;
-  if (!gates) return 0;
-  for (let col = 0; col < (gates[0]?.length ?? 0) + 1; col++) {
-    const occupied = gates.some((row) => row[col]?.length > 0);
-    if (!occupied) return col;
-  }
-  return (gates[0]?.length ?? 0);
-}

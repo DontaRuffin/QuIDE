@@ -4,6 +4,14 @@ const nextConfig = {
     if (isServer) {
       config.externals = [...(config.externals || []), 'quantum-circuit'];
     }
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        path: false,
+        crypto: false,
+      };
+    }
     return config;
   },
 };
