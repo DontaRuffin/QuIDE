@@ -17,7 +17,7 @@ export interface SimulationResults {
   counts: Record<string, number>;
   statevector?: Array<[number, number]>;
   shots: number;
-  runtimeMs: number;
+  runtime_ms: number;
   backend: string;
 }
 
