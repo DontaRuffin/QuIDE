@@ -84,8 +84,7 @@ def run_simulation(req: SimulationRequest) -> SimulationResult:
             statevector_data = None
     else:
         measured_circuit = circuit.copy()
-        if measured_circuit.num_clbits == 0:
-            measured_circuit.measure_all()
+        measured_circuit.measure_all()
         simulator = AerSimulator()
         transpiled = transpile(measured_circuit, simulator)
         job = simulator.run(transpiled, shots=req.shots)
