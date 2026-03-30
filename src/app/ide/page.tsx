@@ -123,7 +123,7 @@ export default function IDEPage() {
         </div>
 
         <div style={S.main}>
-          <CircuitCanvas ref={canvasRef} style={{ flex: 1 }} />
+          <CircuitCanvas ref={canvasRef} className="flex-1" />
           {(simResults || simError) && (
             <div style={S.results}>
               {simError ? (
