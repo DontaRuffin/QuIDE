@@ -27,16 +27,22 @@ export interface CircuitCanvasRef {
 
 interface CircuitCanvasProps {
   className?: string;
+  style?: React.CSSProperties;
 }
 
 const DARK_THEME_CSS = `
-  text { fill: #E6EDF3 !important; }
-  line { stroke: #30363D !important; }
-  rect { stroke: #30363D !important; }
+  text { fill: #E6EDF3 !important; font-family: monospace !important; }
+  line { stroke: #8B949E !important; }
+  rect { stroke: #388BFD !important; fill: #1A3A5C !important; }
+  rect.gate { fill: #1A3A5C !important; stroke: #388BFD !important; }
+  text.gate-label { fill: #E6EDF3 !important; font-weight: bold !important; }
+  .qc-gate-rect { fill: #1A3A5C !important; stroke: #388BFD !important; }
+  .qc-gate-label { fill: #E6EDF3 !important; }
+  svg { background: transparent !important; }
 `;
 
 export const CircuitCanvas = forwardRef<CircuitCanvasRef, CircuitCanvasProps>(
-  ({ className = '' }, ref) => {
+  ({ className = '', style }, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const circuitRef = useRef<QuantumCircuitInstance | null>(null);
     const initializedRef = useRef(false);
@@ -128,6 +134,7 @@ export const CircuitCanvas = forwardRef<CircuitCanvasRef, CircuitCanvasProps>(
       <div className={`relative w-full h-full overflow-auto ${className}`} style={{ background: '#0D1117' }}>
         <div
           ref={containerRef}
+          style={style}
           className="min-w-full min-h-full p-4"
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {

@@ -70,6 +70,9 @@ export default function IDEPage() {
     body: { display: 'flex', flex: 1, overflow: 'hidden' },
     sidebar: { width: '180px', flexShrink: 0, overflowY: 'auto', padding: '12px', background: '#161B22', borderRight: '1px solid #30363D' },
     main: { flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' },
+    codePanel: { width: '320px', flexShrink: 0, display: 'flex', flexDirection: 'column', borderLeft: '1px solid #30363D', background: '#0D1117' },
+    codePanelHeader: { padding: '6px 12px', fontSize: '10px', color: '#8B949E', textTransform: 'uppercase' as const, letterSpacing: '1px', borderBottom: '1px solid #30363D', background: '#161B22' },
+    codePanelBody: { flex: 1, overflowY: 'auto', padding: '12px', fontSize: '11px', lineHeight: '1.6', color: '#E6EDF3', whiteSpace: 'pre' as const, fontFamily: 'monospace' },
     results: { height: '160px', padding: '12px 16px', overflowY: 'auto', fontSize: '11px', fontFamily: 'monospace', background: '#161B22', borderTop: '1px solid #30363D', flexShrink: 0 },
     select: { background: '#0D1117', border: '1px solid #30363D', color: '#E6EDF3', padding: '2px 6px', borderRadius: '4px', fontSize: '12px' },
     btnClear: { padding: '3px 10px', border: '1px solid #30363D', background: 'transparent', color: '#8B949E', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' },
@@ -122,7 +125,8 @@ export default function IDEPage() {
           ))}
         </div>
 
-        <div style={S.main}>
+        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+          <div style={S.main}>
           <CircuitCanvas ref={canvasRef} style={{ flex: 1 }} />
           {(simResults || simError) && (
             <div style={S.results}>
@@ -149,6 +153,13 @@ export default function IDEPage() {
               ) : null}
             </div>
           )}
+          </div>
+          <div style={S.codePanel}>
+            <div style={S.codePanelHeader}>Qiskit Code</div>
+            <div style={S.codePanelBody}>
+              {qasm || '// Build a circuit to see Qiskit code'}
+            </div>
+          </div>
         </div>
       </div>
     </div>
