@@ -43,7 +43,7 @@ export default function IDEPage() {
   const handleSimulate = async () => {
     startSimulation();
     try {
-      const res = await fetch('http://localhost:8000/simulate', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_SIMULATION_URL || 'http://localhost:8000'}/simulate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
