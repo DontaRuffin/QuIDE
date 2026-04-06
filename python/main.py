@@ -10,7 +10,7 @@ import time
 
 from routes.simulate import router as simulate_router
 
-API_KEY = os.getenv("SERVICE_API_KEY", "dev-key-change-in-prod")
+API_KEY = os.getenv("SIMULATION_SERVICE_KEY", os.getenv("SERVICE_API_KEY", "dev-key-change-in-prod"))
 api_key_header = APIKeyHeader(name="X-Service-Key", auto_error=False)
 
 ALLOWED_ORIGINS = [
