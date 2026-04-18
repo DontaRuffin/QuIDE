@@ -1,8 +1,11 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { CircuitCanvas, CircuitCanvasRef } from '@/components/ide/CircuitCanvas';
 import { useCircuitStore } from '@/stores/circuitStore';
+import AIConfigModal from '@/components/ide/AIConfigModal';
+import CircuitExplanation from '@/components/ide/CircuitExplanation';
+import { anthropicKeyStorage } from '@/lib/anthropicKeyStorage';
 
 const GATE_GROUPS = [
   { label: 'Single-Qubit', gates: [
@@ -27,6 +30,10 @@ const GATE_GROUPS = [
 
 export default function IDEPage() {
   const canvasRef = useRef<CircuitCanvasRef>(null);
+  const [isAIConfigOpen, setIsAIConfigOpen] = useState(false);
+  const [hasApiKey, setHasApiKey] = useState(false);
+  const [rightPanelView, setRightPanelView] = useState<'code' | 'explain'>('code');
+
   const circuitName = useCircuitStore((s) => s.circuit.name);
   const numQubits = useCircuitStore((s) => s.circuit.numQubits);
   const qasm = useCircuitStore((s) => s.qasm);
@@ -40,10 +47,20 @@ export default function IDEPage() {
   const setSimulationResults = useCircuitStore((s) => s.setSimulationResults);
   const setSimulationError = useCircuitStore((s) => s.setSimulationError);
 
+  // Check for API key on mount
+  useEffect(() => {
+    setHasApiKey(anthropicKeyStorage.hasKey());
+  }, []);
+
+  const handleAIConfigSave = () => {
+    setHasApiKey(anthropicKeyStorage.hasKey());
+  };
+
   const handleSimulate = async () => {
     startSimulation();
     try {
-      const res = await fetch('http://localhost:8000/simulate', {
+      const simulationUrl = process.env.NEXT_PUBLIC_SIMULATION_URL || 'http://localhost:8000';
+      const res = await fetch(`${simulationUrl}/simulate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -70,6 +87,11 @@ export default function IDEPage() {
     body: { display: 'flex', flex: 1, overflow: 'hidden' },
     sidebar: { width: '180px', flexShrink: 0, overflowY: 'auto', padding: '12px', background: '#161B22', borderRight: '1px solid #30363D' },
     main: { flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' },
+    rightPanel: { width: '400px', flexShrink: 0, display: 'flex', flexDirection: 'column', background: '#161B22', borderLeft: '1px solid #30363D' },
+    rightPanelHeader: { padding: '8px 12px', borderBottom: '1px solid #30363D', display: 'flex', gap: '8px', alignItems: 'center' },
+    rightPanelContent: { flex: 1, overflow: 'auto', padding: '12px', fontSize: '13px' },
+    toggleBtn: { padding: '4px 12px', background: 'transparent', border: '1px solid #30363D', borderRadius: '4px', color: '#8B949E', cursor: 'pointer', fontSize: '12px' },
+    toggleBtnActive: { padding: '4px 12px', background: '#1A3A5C', border: '1px solid #388BFD', borderRadius: '4px', color: '#E6EDF3', cursor: 'pointer', fontSize: '12px', fontWeight: 500 },
     results: { height: '160px', padding: '12px 16px', overflowY: 'auto', fontSize: '11px', fontFamily: 'monospace', background: '#161B22', borderTop: '1px solid #30363D', flexShrink: 0 },
     select: { background: '#0D1117', border: '1px solid #30363D', color: '#E6EDF3', padding: '2px 6px', borderRadius: '4px', fontSize: '12px' },
     btnClear: { padding: '3px 10px', border: '1px solid #30363D', background: 'transparent', color: '#8B949E', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' },
@@ -93,6 +115,13 @@ export default function IDEPage() {
             {[1,2,3,4,5,6,8,10,12].map((n) => <option key={n} value={n}>{n}</option>)}
           </select>
           <button onClick={clearCircuit} style={S.btnClear}>Clear</button>
+          <button
+            onClick={() => setIsAIConfigOpen(true)}
+            style={{ ...S.btnClear, color: hasApiKey ? '#3FB950' : '#8B949E' }}
+            title="Configure AI Assistant"
+          >
+            ⚙ AI
+          </button>
           <button onClick={handleSimulate} disabled={isRunning} style={{ ...S.btnRun, opacity: isRunning ? 0.5 : 1 }}>
             {isRunning ? 'Running...' : '▶ Simulate'}
           </button>
@@ -150,7 +179,53 @@ export default function IDEPage() {
             </div>
           )}
         </div>
+
+        {/* Right Panel: Code / Explain */}
+        <div style={S.rightPanel}>
+          <div style={S.rightPanelHeader}>
+            <button
+              onClick={() => setRightPanelView('code')}
+              style={rightPanelView === 'code' ? S.toggleBtnActive : S.toggleBtn}
+            >
+              Code
+            </button>
+            <button
+              onClick={() => setRightPanelView('explain')}
+              style={rightPanelView === 'explain' ? S.toggleBtnActive : S.toggleBtn}
+            >
+              Explain
+            </button>
+          </div>
+          <div style={S.rightPanelContent}>
+            {rightPanelView === 'code' ? (
+              <textarea
+                value={qasm}
+                readOnly
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  background: '#0D1117',
+                  border: '1px solid #30363D',
+                  borderRadius: '4px',
+                  color: '#E6EDF3',
+                  padding: '8px',
+                  fontFamily: 'monospace',
+                  fontSize: '12px',
+                  resize: 'none',
+                }}
+              />
+            ) : (
+              <CircuitExplanation qasm={qasm} numQubits={numQubits} hasApiKey={hasApiKey} />
+            )}
+          </div>
+        </div>
       </div>
+
+      <AIConfigModal
+        isOpen={isAIConfigOpen}
+        onClose={() => setIsAIConfigOpen(false)}
+        onSave={handleAIConfigSave}
+      />
     </div>
   );
 }
