@@ -37,18 +37,19 @@ export default function AIConfigModal({ isOpen, onClose, onSave }: AIConfigModal
     setTestResult(null);
 
     try {
-      // Test the API key with a simple request
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      // Test the API key via backend proxy (avoids CORS)
+      const backendUrl = process.env.NEXT_PUBLIC_SIMULATION_URL || 'http://localhost:8000';
+      const response = await fetch(`${backendUrl}/anthropic/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-api-key': apiKey.trim(),
-          'anthropic-version': '2023-06-01',
         },
         body: JSON.stringify({
           model: 'claude-3-haiku-20240307',
           max_tokens: 10,
           messages: [{ role: 'user', content: 'Test' }],
+          stream: false,
         }),
       });
 

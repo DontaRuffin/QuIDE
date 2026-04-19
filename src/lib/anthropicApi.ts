@@ -1,7 +1,6 @@
 // QuIDE — Anthropic API Client
 // src/lib/anthropicApi.ts
 
-const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 const MODEL = 'claude-3-haiku-20240307';
 
 const EXPLAIN_SYSTEM_PROMPT = `You are a quantum computing educator. Given an OpenQASM circuit, explain what it does in plain English — gate by gate, describing the quantum state after each operation.
@@ -28,12 +27,14 @@ export async function* explainCircuit(
   numQubits: number,
   apiKey: string
 ): AsyncGenerator<string> {
-  const response = await fetch(ANTHROPIC_API_URL, {
+  // Call QuIDE backend proxy to avoid CORS issues
+  const backendUrl = process.env.NEXT_PUBLIC_SIMULATION_URL || 'http://localhost:8000';
+
+  const response = await fetch(`${backendUrl}/anthropic/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
+      'x-api-key': apiKey.trim(),
     },
     body: JSON.stringify({
       model: MODEL,

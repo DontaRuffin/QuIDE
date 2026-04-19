@@ -9,6 +9,7 @@ import os
 import time
 
 from routes.simulate import router as simulate_router
+from routes.anthropic_proxy import router as anthropic_router
 
 API_KEY = os.getenv("SIMULATION_SERVICE_KEY", os.getenv("SERVICE_API_KEY", "dev-key-change-in-prod"))
 api_key_header = APIKeyHeader(name="X-Service-Key", auto_error=False)
@@ -78,6 +79,12 @@ app.include_router(
     simulate_router,
     prefix="/simulate",
     dependencies=[Depends(verify_api_key)],
+)
+
+# Anthropic API proxy (no service key required - uses user's API key)
+app.include_router(
+    anthropic_router,
+    prefix="/anthropic",
 )
 
 
