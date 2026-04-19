@@ -42,7 +42,7 @@ export default function AIConfigModal({ isOpen, onClose, onSave }: AIConfigModal
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': apiKey,
+          'x-api-key': apiKey.trim(),
           'anthropic-version': '2023-06-01',
         },
         body: JSON.stringify({
@@ -55,17 +55,37 @@ export default function AIConfigModal({ isOpen, onClose, onSave }: AIConfigModal
       if (response.ok) {
         setTestResult({ success: true, message: 'API key is valid!' });
       } else {
-        const errorData = await response.json();
+        // Try to get error details
+        let errorMessage = `Status ${response.status}: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error?.message || errorMessage;
+        } catch {
+          // If JSON parsing fails, use the status text
+        }
         setTestResult({
           success: false,
-          message: `Invalid API key: ${errorData.error?.message || response.statusText}`,
+          message: errorMessage,
         });
       }
     } catch (error) {
+      // More detailed error message for debugging
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        // Check for specific error types
+        if (error.message.includes('Failed to fetch')) {
+          errorMessage = 'Network error: Unable to reach Anthropic API. Check your internet connection or try again.';
+        } else if (error.message.includes('CORS')) {
+          errorMessage = 'CORS error: Browser blocked the request. This is likely a temporary issue.';
+        }
+      }
       setTestResult({
         success: false,
-        message: `Network error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: errorMessage,
       });
+      // Log full error for debugging
+      console.error('API key test error:', error);
     } finally {
       setIsTestingKey(false);
     }
