@@ -96,7 +96,8 @@ class IBMJobRunner:
 
             # Submit job with SamplerV2 (without Session for Open Plan compatibility)
             # Note: Session mode is only available for Premium/Flex plans, not Open Plan
-            sampler = SamplerV2(backend=backend)
+            # Pass backend as positional argument to SamplerV2
+            sampler = SamplerV2(backend)
 
             # Submit job
             job = sampler.run([transpiled], shots=shots)
