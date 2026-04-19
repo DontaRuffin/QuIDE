@@ -10,6 +10,7 @@ import time
 
 from routes.simulate import router as simulate_router
 from routes.anthropic_proxy import router as anthropic_router
+from routes.ibm import router as ibm_router
 
 API_KEY = os.getenv("SIMULATION_SERVICE_KEY", os.getenv("SERVICE_API_KEY", "dev-key-change-in-prod"))
 api_key_header = APIKeyHeader(name="X-Service-Key", auto_error=False)
@@ -85,6 +86,12 @@ app.include_router(
 app.include_router(
     anthropic_router,
     prefix="/anthropic",
+)
+
+# IBM Quantum Platform proxy (no service key required - uses user's IBM API key)
+app.include_router(
+    ibm_router,
+    prefix="/ibm",
 )
 
 

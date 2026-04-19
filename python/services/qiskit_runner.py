@@ -15,6 +15,15 @@ class SimulationRequest(BaseModel):
     backend: str = "aer_simulator"
     include_statevector: bool = True
 
+    # IBM-specific fields (optional, required when backend_type = "ibm")
+    backend_type: str = "aer"  # "aer" | "ibm"
+    ibm_api_key: Optional[str] = None
+    ibm_backend_name: Optional[str] = None
+    ibm_coupling_map: Optional[List[List[int]]] = None
+    ibm_basis_gates: Optional[List[str]] = None
+    ibm_region: str = "us-east"
+    ibm_instance_crn: Optional[str] = None
+
 
 class SimulationResult(BaseModel):
     counts: Dict[str, int]
@@ -24,6 +33,13 @@ class SimulationResult(BaseModel):
     backend: str
     num_qubits: int
     gate_count: int
+
+    # IBM-specific fields (present when backend_type = "ibm")
+    backend_type: str = "aer"
+    ibm_job_id: Optional[str] = None
+    queue_time_ms: Optional[int] = None
+    transpiled_depth: Optional[int] = None
+    transpiled_gate_count: Optional[int] = None
 
 
 MAX_QUBITS_STATEVECTOR = 12
