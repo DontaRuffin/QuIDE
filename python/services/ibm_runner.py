@@ -135,18 +135,18 @@ class IBMJobRunner:
 
             runtime_ms = total_time_ms - queue_time_ms
 
-                return {
-                    "counts": counts,
-                    "shots": shots,
-                    "backend": backend_name,
-                    "job_id": job_id,
-                    "runtime_ms": runtime_ms,
-                    "queue_time_ms": queue_time_ms,
-                    "transpiled_depth": transpiled_depth,
-                    "transpiled_gate_count": transpiled_gate_count,
-                    "num_qubits": circuit.num_qubits,
-                    "gate_count": len([op for op in circuit.data if op.operation.name not in ('barrier', 'measure')]),
-                }
+            return {
+                "counts": counts,
+                "shots": shots,
+                "backend": backend_name,
+                "job_id": job_id,
+                "runtime_ms": runtime_ms,
+                "queue_time_ms": queue_time_ms,
+                "transpiled_depth": transpiled_depth,
+                "transpiled_gate_count": transpiled_gate_count,
+                "num_qubits": circuit.num_qubits,
+                "gate_count": len([op for op in circuit.data if op.operation.name not in ('barrier', 'measure')]),
+            }
 
         except TimeoutError:
             raise TimeoutError("IBM job exceeded 5-minute timeout. Queue may be busy.")
