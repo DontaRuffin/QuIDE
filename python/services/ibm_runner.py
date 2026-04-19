@@ -2,7 +2,7 @@
 # python/services/ibm_runner.py
 
 from qiskit import QuantumCircuit
-from qiskit_ibm_runtime import QiskitRuntimeService, SamplerV2, Session
+from qiskit_ibm_runtime import QiskitRuntimeService, SamplerV2
 from typing import Dict, Any, List, Optional
 from services.isa_transpiler import isa_transpiler
 import time
@@ -94,46 +94,46 @@ class IBMJobRunner:
             # Get backend
             backend = service.backend(backend_name)
 
-            # Submit job with SamplerV2 using a session
-            with Session(service=service, backend=backend_name) as session:
-                sampler = SamplerV2(session=session)
+            # Submit job with SamplerV2 (without Session for Open Plan compatibility)
+            # Note: Session mode is only available for Premium/Flex plans, not Open Plan
+            sampler = SamplerV2(backend=backend)
 
-                # Submit job
-                job = sampler.run([transpiled], shots=shots)
+            # Submit job
+            job = sampler.run([transpiled], shots=shots)
 
-                # Wait for result (timeout: 5 minutes)
-                result = job.result(timeout=300)
+            # Wait for result (timeout: 5 minutes)
+            result = job.result(timeout=300)
 
-                # Extract counts from result
-                # SamplerV2 returns PUB (Primitive Unified Bloc) results
-                pub_result = result[0]
+            # Extract counts from result
+            # SamplerV2 returns PUB (Primitive Unified Bloc) results
+            pub_result = result[0]
 
-                # Get counts from data
-                counts_data = pub_result.data.meas.get_counts()
+            # Get counts from data
+            counts_data = pub_result.data.meas.get_counts()
 
-                # Format counts as dict
-                counts = {state: int(count) for state, count in counts_data.items()}
+            # Format counts as dict
+            counts = {state: int(count) for state, count in counts_data.items()}
 
-                # Get job metadata
-                job_id = job.job_id()
+            # Get job metadata
+            job_id = job.job_id()
 
-                # Calculate timing
-                end_time = time.time()
-                total_time_ms = int((end_time - start_time) * 1000)
+            # Calculate timing
+            end_time = time.time()
+            total_time_ms = int((end_time - start_time) * 1000)
 
-                # Try to get queue time from job metrics
-                queue_time_ms = 0
-                try:
-                    metrics = job.metrics()
-                    if metrics and "timestamps" in metrics:
-                        timestamps = metrics["timestamps"]
-                        if "running" in timestamps and "queued" in timestamps:
-                            queue_time_sec = timestamps["running"] - timestamps["queued"]
-                            queue_time_ms = int(queue_time_sec * 1000)
-                except:
-                    pass  # Queue time not critical
+            # Try to get queue time from job metrics
+            queue_time_ms = 0
+            try:
+                metrics = job.metrics()
+                if metrics and "timestamps" in metrics:
+                    timestamps = metrics["timestamps"]
+                    if "running" in timestamps and "queued" in timestamps:
+                        queue_time_sec = timestamps["running"] - timestamps["queued"]
+                        queue_time_ms = int(queue_time_sec * 1000)
+            except:
+                pass  # Queue time not critical
 
-                runtime_ms = total_time_ms - queue_time_ms
+            runtime_ms = total_time_ms - queue_time_ms
 
                 return {
                     "counts": counts,
