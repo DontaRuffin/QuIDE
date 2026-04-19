@@ -2,7 +2,7 @@
 // src/lib/anthropicApi.ts
 
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
-const MODEL = 'claude-haiku-4-5';
+const MODEL = 'claude-3-haiku-20240307';
 
 const EXPLAIN_SYSTEM_PROMPT = `You are a quantum computing educator. Given an OpenQASM circuit, explain what it does in plain English — gate by gate, describing the quantum state after each operation.
 

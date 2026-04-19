@@ -46,7 +46,7 @@ export default function AIConfigModal({ isOpen, onClose, onSave }: AIConfigModal
           'anthropic-version': '2023-06-01',
         },
         body: JSON.stringify({
-          model: 'claude-haiku-4-5',
+          model: 'claude-3-haiku-20240307',
           max_tokens: 10,
           messages: [{ role: 'user', content: 'Test' }],
         }),
@@ -137,7 +137,7 @@ export default function AIConfigModal({ isOpen, onClose, onSave }: AIConfigModal
             locally in your browser and never sent to QuIDE servers.
           </p>
           <p style={{ margin: 0 }}>
-            Using Claude Haiku 4.5 (~$0.25 per 1M input tokens)
+            Using Claude 3 Haiku (~$0.25 per 1M input tokens)
           </p>
         </div>
 
