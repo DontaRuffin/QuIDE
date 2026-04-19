@@ -19,6 +19,15 @@ export interface SimulationResults {
   shots: number;
   runtime_ms: number;
   backend: string;
+  num_qubits: number;
+  gate_count: number;
+
+  // IBM-specific fields (present when backend_type = "ibm")
+  backend_type?: string;
+  ibm_job_id?: string;
+  queue_time_ms?: number;
+  transpiled_depth?: number;
+  transpiled_gate_count?: number;
 }
 
 interface CircuitStore {
