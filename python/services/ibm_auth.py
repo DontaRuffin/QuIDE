@@ -78,6 +78,17 @@ class IBMAuthService:
 
                 if response.status_code != 200:
                     error_detail = response.text
+
+                    # Provide helpful error messages
+                    if response.status_code == 400:
+                        if "could not be found" in error_detail.lower():
+                            raise ValueError(
+                                "Invalid IBM API key. Please verify:\n"
+                                "1. Your API key is from quantum.cloud.ibm.com (not the old platform)\n"
+                                "2. The key is 44 characters long\n"
+                                "3. No extra spaces when copying"
+                            )
+
                     raise ValueError(f"IBM IAM authentication failed (status {response.status_code}): {error_detail}")
 
                 data = response.json()

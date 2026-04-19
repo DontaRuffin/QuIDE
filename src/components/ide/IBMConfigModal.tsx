@@ -32,8 +32,19 @@ export default function IBMConfigModal({ isOpen, onClose }: IBMConfigModalProps)
   }, [isOpen]);
 
   const handleTestKey = async () => {
-    if (!apiKey || apiKey.length < 40) {
-      setTestResult({ success: false, message: 'Invalid API key format (must be 44 characters)' });
+    const trimmedKey = apiKey.trim();
+
+    // Validate API key format
+    if (!trimmedKey) {
+      setTestResult({ success: false, message: 'API key is required' });
+      return;
+    }
+
+    if (trimmedKey.length < 40) {
+      setTestResult({
+        success: false,
+        message: `Invalid API key format: ${trimmedKey.length} characters (expected ~44).\n\nGet your API key from: quantum.cloud.ibm.com → Account Settings → API keys`
+      });
       return;
     }
 
@@ -46,7 +57,7 @@ export default function IBMConfigModal({ isOpen, onClose }: IBMConfigModalProps)
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': apiKey.trim(),
+          'x-api-key': trimmedKey,
         },
         body: JSON.stringify({
           region,
@@ -159,6 +170,7 @@ export default function IBMConfigModal({ isOpen, onClose }: IBMConfigModalProps)
             >
               quantum.cloud.ibm.com
             </a>
+            {' '}→ Account Settings → API keys (IBM Cloud API key, NOT legacy token)
           </p>
         </div>
 
