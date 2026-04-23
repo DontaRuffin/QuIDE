@@ -9,6 +9,8 @@ import CircuitExplanation from '@/components/ide/CircuitExplanation';
 import { anthropicKeyStorage } from '@/lib/anthropicKeyStorage';
 import { ibmKeyStorage } from '@/lib/ibmKeyStorage';
 import { listIBMBackends, estimateIBMCost, runOnIBMHardware, type IBMBackend, type CostEstimate } from '@/lib/ibmApi';
+import OnboardingModal from '@/components/ide/OnboardingModal';
+import { onboardingStorage } from '@/lib/onboardingStorage';
 
 const GATE_GROUPS = [
   { label: 'Single-Qubit', gates: [
@@ -35,6 +37,7 @@ export default function IDEPage() {
   const canvasRef = useRef<CircuitCanvasRef>(null);
   const [isAIConfigOpen, setIsAIConfigOpen] = useState(false);
   const [isIBMConfigOpen, setIsIBMConfigOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(false);
   const [hasIBMKey, setHasIBMKey] = useState(false);
   const [rightPanelView, setRightPanelView] = useState<'code' | 'explain'>('code');
@@ -63,6 +66,11 @@ export default function IDEPage() {
   useEffect(() => {
     setHasApiKey(anthropicKeyStorage.hasKey());
     setHasIBMKey(ibmKeyStorage.hasKey());
+
+    // Show onboarding on first visit
+    if (!onboardingStorage.hasCompleted()) {
+      setIsOnboardingOpen(true);
+    }
   }, []);
 
   // Load IBM backends when IBM key is available
@@ -241,6 +249,13 @@ export default function IDEPage() {
           </select>
           <button onClick={clearCircuit} style={S.btnClear}>Clear</button>
           <button
+            onClick={() => setIsOnboardingOpen(true)}
+            style={{ ...S.btnClear, color: '#8B949E' }}
+            title="Help & Tutorial"
+          >
+            ?
+          </button>
+          <button
             onClick={() => setIsAIConfigOpen(true)}
             style={{ ...S.btnClear, color: hasApiKey ? '#3FB950' : '#8B949E' }}
             title="Configure AI Assistant"
@@ -375,6 +390,15 @@ export default function IDEPage() {
         onClose={() => {
           setIsIBMConfigOpen(false);
           handleIBMConfigSave();
+        }}
+      />
+
+      <OnboardingModal
+        isOpen={isOnboardingOpen}
+        onClose={() => setIsOnboardingOpen(false)}
+        onComplete={() => {
+          onboardingStorage.save();
+          setIsOnboardingOpen(false);
         }}
       />
 
