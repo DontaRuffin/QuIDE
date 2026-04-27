@@ -402,6 +402,29 @@ export default function IDEPage() {
         }}
       />
 
+      {/* Replay onboarding pill */}
+      <button
+        onClick={() => setIsOnboardingOpen(true)}
+        style={{
+          position: 'fixed',
+          bottom: 16,
+          left: 16,
+          zIndex: 50,
+          background: '#1a1d23',
+          border: '1px solid #2c2f37',
+          borderRadius: 20,
+          padding: '5px 12px',
+          color: '#5c616b',
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: 11,
+          cursor: 'pointer',
+          letterSpacing: '0.02em',
+        }}
+        title="Replay onboarding tutorial"
+      >
+        ↻ Replay onboarding
+      </button>
+
       {/* Cost Estimate Modal */}
       {showCostEstimate && costEstimate && (
         <div
