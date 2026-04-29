@@ -6,6 +6,7 @@ import { useCircuitStore } from '@/stores/circuitStore';
 import AIConfigModal from '@/components/ide/AIConfigModal';
 import IBMConfigModal from '@/components/ide/IBMConfigModal';
 import CircuitExplanation from '@/components/ide/CircuitExplanation';
+import CircuitDebugger from '@/components/ide/CircuitDebugger';
 import { anthropicKeyStorage } from '@/lib/anthropicKeyStorage';
 import { ibmKeyStorage } from '@/lib/ibmKeyStorage';
 import { listIBMBackends, estimateIBMCost, runOnIBMHardware, type IBMBackend, type CostEstimate } from '@/lib/ibmApi';
@@ -40,7 +41,7 @@ export default function IDEPage() {
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(false);
   const [hasIBMKey, setHasIBMKey] = useState(false);
-  const [rightPanelView, setRightPanelView] = useState<'code' | 'explain'>('code');
+  const [rightPanelView, setRightPanelView] = useState<'code' | 'explain' | 'debug'>('code');
 
   // IBM backend state
   const [selectedBackend, setSelectedBackend] = useState<string>('aer_simulator');
@@ -353,6 +354,12 @@ export default function IDEPage() {
             >
               Explain
             </button>
+            <button
+              onClick={() => setRightPanelView('debug')}
+              style={rightPanelView === 'debug' ? S.toggleBtnActive : S.toggleBtn}
+            >
+              Debug
+            </button>
           </div>
           <div style={S.rightPanelContent}>
             {rightPanelView === 'code' ? (
@@ -372,8 +379,16 @@ export default function IDEPage() {
                   resize: 'none',
                 }}
               />
-            ) : (
+            ) : rightPanelView === 'explain' ? (
               <CircuitExplanation qasm={qasm} numQubits={numQubits} hasApiKey={hasApiKey} />
+            ) : (
+              <CircuitDebugger
+                qasm={qasm}
+                numQubits={numQubits}
+                selectedBackend={selectedBackend}
+                ibmBackends={ibmBackends}
+                hasApiKey={hasApiKey}
+              />
             )}
           </div>
         </div>
