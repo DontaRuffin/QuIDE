@@ -131,7 +131,7 @@ export const CircuitCanvas = forwardRef<CircuitCanvasRef, CircuitCanvasProps>(
     }));
 
     return (
-      <div className={`relative w-full h-full overflow-auto ${className}`} style={{ background: '#0D1117' }}>
+      <div className={`relative w-full h-full overflow-auto overflow-x-auto ${className}`} style={{ background: '#0D1117' }}>
         <div
           ref={containerRef}
           style={style}

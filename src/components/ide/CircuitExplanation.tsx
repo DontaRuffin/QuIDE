@@ -82,6 +82,9 @@ export default function CircuitExplanation({ qasm, numQubits, hasApiKey }: Circu
               </span>
             )}
           </div>
+          <div style={{ fontSize: '11px', color: '#8B949E', fontStyle: 'italic', padding: '0 12px 12px 12px' }}>
+            AI-generated educational summary. Verify critical unitary matrices and phase operations against analytical state vectors.
+          </div>
           <div
             style={{
               padding: '8px 12px',
