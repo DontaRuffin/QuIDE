@@ -24,8 +24,8 @@ const LESSON_STEPS = [
   },
   {
     n: '04',
-    title: 'Switch from simulator to real hardware',
-    body: 'Toggle from "Local Simulator" to a real IBM Quantum backend and re-run.',
+    title: 'From Local Simulation to Real QPUs',
+    body: 'QuIDE simulates ideal statevectors locally in your browser. When you are ready for physical quantum computing, export your circuit to Qiskit Runtime to execute on IBM Quantum QPUs via your own cloud credentials.',
     why: 'Same circuit, real hardware. You’ll likely see some noise — a few unexpected outcomes. That’s real quantum hardware being imperfect, not a bug.',
     ai: '"Compare this hardware run to the simulator run and explain the differences in terms a beginner can understand — is this expected noise or a circuit design issue?"',
   },
@@ -178,6 +178,7 @@ export default function LandingPage() {
             Start the mini-course →
           </button>
         </form>
+        <p className="mt-3 text-xs text-gh-muted">We respect your inbox. Unsubscribe at any time with one click.</p>
       </section>
 
       {/* FOOTER */}
